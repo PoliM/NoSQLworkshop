@@ -47,7 +47,7 @@ public class StreamTwitterToCassandra
 
    private static void extractClusterFromProperties(Properties props)
    {
-      if (props.contains("cluster.address"))
+      if (props.containsKey("cluster.address"))
       {
          CLUSTER_ADRESS = props.getProperty("cluster.address");
       }

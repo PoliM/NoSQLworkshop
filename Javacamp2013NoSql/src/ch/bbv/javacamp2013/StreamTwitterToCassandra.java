@@ -14,7 +14,7 @@ import ch.bbv.javacamp2013.twitter.TwitterStreamHandler;
 public class StreamTwitterToCassandra
 {
 
-   private static final String CLUSTER_ADRESS = "192.168.20.130:9160";
+   private static String CLUSTER_ADRESS = "192.168.20.130:9160";
 
    private static final String CLUSTER_NAME = "JavaCampNoSqlCluster";
 
@@ -24,7 +24,9 @@ public class StreamTwitterToCassandra
    {
       Properties props = readApplicationProperties();
       extractParametersFromProperties(props);
+      extractClusterFromProperties(props);
 
+      System.out.println("Connecting to cluster " + CLUSTER_NAME + " @ " + CLUSTER_ADRESS);
       JavacampKeyspace javacampKeyspace = new JavacampKeyspace(CLUSTER_NAME, CLUSTER_ADRESS);
 
       int paraId = 0;
@@ -41,6 +43,14 @@ public class StreamTwitterToCassandra
             para.getPassword());
 
       twitterStreamHandler.stream(para.getFilter());
+   }
+
+   private static void extractClusterFromProperties(Properties props)
+   {
+      if (props.contains("cluster.address"))
+      {
+         CLUSTER_ADRESS = props.getProperty("cluster.address");
+      }
    }
 
    private static void extractParametersFromProperties(Properties props)

@@ -38,13 +38,27 @@ public class UserDao
 
    private final ColumnFamilyTemplate<Long, String> _template;
 
+   private final Keyspace _keyspace;
+
+   private static LongSerializer getKeySerializer()
+   {
+      return LongSerializer.get();
+   }
+
+   private static StringSerializer getColumnNameSerializer()
+   {
+      return StringSerializer.get();
+   }
+
    UserDao(Keyspace keyspace)
    {
+      _keyspace = keyspace;
+
       _template = new ThriftColumnFamilyTemplate<Long, String>( // nl
             keyspace, // keyspace
             COLUMNFAMILY_NAME, // columnFamily
-            LongSerializer.get(), // keySerializer
-            StringSerializer.get()); // topSerializer
+            getKeySerializer(), // keySerializer
+            getColumnNameSerializer()); // topSerializer
    }
 
    /**
@@ -74,17 +88,17 @@ public class UserDao
    static ColumnFamilyDefinition getColumnFamilyDefinition(String keyspacename)
    {
       BasicColumnDefinition idColDef = new BasicColumnDefinition();
-      idColDef.setName(StringSerializer.get().toByteBuffer(COL_USER_ID));
+      idColDef.setName(getColumnNameSerializer().toByteBuffer(COL_USER_ID));
       idColDef.setIndexName(COL_USER_ID + "_idx");
       idColDef.setIndexType(ColumnIndexType.KEYS);
       idColDef.setValidationClass(ComparatorType.LONGTYPE.getClassName());
 
       BasicColumnDefinition nameColDef = new BasicColumnDefinition();
-      nameColDef.setName(StringSerializer.get().toByteBuffer(COL_NAME));
+      nameColDef.setName(getColumnNameSerializer().toByteBuffer(COL_NAME));
       nameColDef.setValidationClass(ComparatorType.UTF8TYPE.getClassName());
 
       BasicColumnDefinition screenNameColDef = new BasicColumnDefinition();
-      screenNameColDef.setName(StringSerializer.get().toByteBuffer(COL_SCREEN_NAME));
+      screenNameColDef.setName(getColumnNameSerializer().toByteBuffer(COL_SCREEN_NAME));
       screenNameColDef.setValidationClass(ComparatorType.UTF8TYPE.getClassName());
 
       return HFactory.createColumnFamilyDefinition( // nl
@@ -95,4 +109,38 @@ public class UserDao
                   (ColumnDefinition) screenNameColDef));
 
    }
+
+   /**
+    * Returns a Iterator to get all the users.
+    * 
+    * @return The iterator.
+    */
+   public UserIterator getIterator()
+   {
+      return new UserIterator(_keyspace);
+   }
+
+   public static class UserIterator extends RowIterator<Long, String>
+   {
+      public UserIterator(Keyspace keyspace)
+      {
+         super(keyspace, COLUMNFAMILY_NAME, getKeySerializer(), getColumnNameSerializer());
+      }
+
+      public long getUserId()
+      {
+         return LongSerializer.get().fromByteBuffer(getValueByColumnName(COL_USER_ID));
+      }
+
+      public String getName()
+      {
+         return StringSerializer.get().fromByteBuffer(getValueByColumnName(COL_NAME));
+      }
+
+      public String getScreenName()
+      {
+         return StringSerializer.get().fromByteBuffer(getValueByColumnName(COL_SCREEN_NAME));
+      }
+   }
+
 }

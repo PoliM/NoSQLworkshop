@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Date;
 
 import me.prettyprint.cassandra.model.BasicColumnDefinition;
+import me.prettyprint.cassandra.serializers.DateSerializer;
 import me.prettyprint.cassandra.serializers.LongSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.cassandra.service.ColumnSliceIterator;
@@ -49,14 +50,24 @@ public class TweetDao
 
    private final ColumnFamilyTemplate<Long, String> _template;
 
+   private static LongSerializer getKeySerializer()
+   {
+      return LongSerializer.get();
+   }
+
+   private static StringSerializer getTopSerializer()
+   {
+      return StringSerializer.get();
+   }
+
    TweetDao(Keyspace keyspace)
    {
       _keyspace = keyspace;
 
       _template = new ThriftColumnFamilyTemplate<Long, String>(_keyspace, // keyspace
             COLUMNFAMILY_NAME, // columnFamily
-            LongSerializer.get(), // keySerializer
-            StringSerializer.get()); // topSerializer
+            getKeySerializer(), // keySerializer
+            getTopSerializer()); // topSerializer
    }
 
    /**
@@ -88,21 +99,21 @@ public class TweetDao
    static ColumnFamilyDefinition getColumnFamilyDefinition(String keyspacename)
    {
       BasicColumnDefinition idColDef = new BasicColumnDefinition();
-      idColDef.setName(StringSerializer.get().toByteBuffer(COL_TWEET_ID));
+      idColDef.setName(getTopSerializer().toByteBuffer(COL_TWEET_ID));
       idColDef.setIndexName(COL_TWEET_ID + "_idx");
       idColDef.setIndexType(ColumnIndexType.KEYS);
       idColDef.setValidationClass(ComparatorType.LONGTYPE.getClassName());
 
       BasicColumnDefinition userColDef = new BasicColumnDefinition();
-      userColDef.setName(StringSerializer.get().toByteBuffer(COL_USER_ID));
+      userColDef.setName(getTopSerializer().toByteBuffer(COL_USER_ID));
       userColDef.setValidationClass(ComparatorType.LONGTYPE.getClassName());
 
       BasicColumnDefinition bodyColDef = new BasicColumnDefinition();
-      bodyColDef.setName(StringSerializer.get().toByteBuffer(COL_BODY));
+      bodyColDef.setName(getTopSerializer().toByteBuffer(COL_BODY));
       bodyColDef.setValidationClass(ComparatorType.UTF8TYPE.getClassName());
 
       BasicColumnDefinition createdAtColDef = new BasicColumnDefinition();
-      createdAtColDef.setName(StringSerializer.get().toByteBuffer(COL_CREATED_AT));
+      createdAtColDef.setName(getTopSerializer().toByteBuffer(COL_CREATED_AT));
       createdAtColDef.setValidationClass(ComparatorType.DATETYPE.getClassName());
 
       return HFactory.createColumnFamilyDefinition( // nl
@@ -116,8 +127,8 @@ public class TweetDao
 
    private void getTweet(long tweetid)
    {
-      SliceQuery<Long, String, String> query = HFactory.createSliceQuery(_keyspace, LongSerializer.get(),
-            StringSerializer.get(), StringSerializer.get());
+      SliceQuery<Long, String, String> query = HFactory.createSliceQuery(_keyspace, getKeySerializer(),
+            getTopSerializer(), getTopSerializer());
 
       query.setKey(tweetid);
       query.setColumnFamily(COLUMNFAMILY_NAME);
@@ -135,9 +146,48 @@ public class TweetDao
    public static void main(String[] args)
    {
       TweetDao tweetAccess = new JavacampKeyspace("Test Cluster", "192.168.56.101:9160").getTweetDao();
+
+      int count = 0;
+      TweetIterator i = tweetAccess.getIterator();
+      while (i.moveNextSkipEmptyRow())
+      {
+         System.out.println(i.getKey() + ": userid=" + i.getUserId() + ", body=\"" + i.getBody() + "\", createdAt="
+               + i.getCreatedAt());
+         count++;
+      }
+      System.out.println("Total=" + count);
+
       long id = 1234;
       tweetAccess.addTweet(id, 23456, "My body", new Date());
       tweetAccess.getTweet(id);
       tweetAccess.getTweet(id);
+   }
+
+   TweetIterator getIterator()
+   {
+      return new TweetIterator(_keyspace);
+   }
+
+   public static class TweetIterator extends RowIterator<Long, String>
+   {
+      public TweetIterator(Keyspace keyspace)
+      {
+         super(keyspace, COLUMNFAMILY_NAME, getKeySerializer(), StringSerializer.get());
+      }
+
+      public long getUserId()
+      {
+         return LongSerializer.get().fromByteBuffer(getValueByColumnName(COL_USER_ID));
+      }
+
+      public Date getCreatedAt()
+      {
+         return DateSerializer.get().fromByteBuffer(getValueByColumnName(COL_CREATED_AT));
+      }
+
+      public String getBody()
+      {
+         return StringSerializer.get().fromByteBuffer(getValueByColumnName(COL_BODY));
+      }
    }
 }

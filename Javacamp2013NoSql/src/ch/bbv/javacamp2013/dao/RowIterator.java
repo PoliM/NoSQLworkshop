@@ -63,7 +63,7 @@ public class RowIterator<K, N>
       K keyOfLastRow = (row == null) ? null : row.getKey();
 
       rangeSlicesQuery.setKeys(keyOfLastRow, null);
-      System.out.println(" > " + keyOfLastRow);
+      // System.out.println(" > " + keyOfLastRow);
 
       QueryResult<OrderedRows<K, N, ByteBuffer>> result = rangeSlicesQuery.execute();
       rows = result.get();

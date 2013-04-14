@@ -55,7 +55,7 @@ public class TweetDao
       return LongSerializer.get();
    }
 
-   private static StringSerializer getTopSerializer()
+   private static StringSerializer getColumnNameSerializer()
    {
       return StringSerializer.get();
    }
@@ -67,7 +67,7 @@ public class TweetDao
       _template = new ThriftColumnFamilyTemplate<Long, String>(_keyspace, // keyspace
             COLUMNFAMILY_NAME, // columnFamily
             getKeySerializer(), // keySerializer
-            getTopSerializer()); // topSerializer
+            getColumnNameSerializer()); // topSerializer
    }
 
    /**
@@ -99,21 +99,21 @@ public class TweetDao
    static ColumnFamilyDefinition getColumnFamilyDefinition(String keyspacename)
    {
       BasicColumnDefinition idColDef = new BasicColumnDefinition();
-      idColDef.setName(getTopSerializer().toByteBuffer(COL_TWEET_ID));
+      idColDef.setName(getColumnNameSerializer().toByteBuffer(COL_TWEET_ID));
       idColDef.setIndexName(COL_TWEET_ID + "_idx");
       idColDef.setIndexType(ColumnIndexType.KEYS);
       idColDef.setValidationClass(ComparatorType.LONGTYPE.getClassName());
 
       BasicColumnDefinition userColDef = new BasicColumnDefinition();
-      userColDef.setName(getTopSerializer().toByteBuffer(COL_USER_ID));
+      userColDef.setName(getColumnNameSerializer().toByteBuffer(COL_USER_ID));
       userColDef.setValidationClass(ComparatorType.LONGTYPE.getClassName());
 
       BasicColumnDefinition bodyColDef = new BasicColumnDefinition();
-      bodyColDef.setName(getTopSerializer().toByteBuffer(COL_BODY));
+      bodyColDef.setName(getColumnNameSerializer().toByteBuffer(COL_BODY));
       bodyColDef.setValidationClass(ComparatorType.UTF8TYPE.getClassName());
 
       BasicColumnDefinition createdAtColDef = new BasicColumnDefinition();
-      createdAtColDef.setName(getTopSerializer().toByteBuffer(COL_CREATED_AT));
+      createdAtColDef.setName(getColumnNameSerializer().toByteBuffer(COL_CREATED_AT));
       createdAtColDef.setValidationClass(ComparatorType.DATETYPE.getClassName());
 
       return HFactory.createColumnFamilyDefinition( // nl
@@ -128,7 +128,7 @@ public class TweetDao
    private void getTweet(long tweetid)
    {
       SliceQuery<Long, String, String> query = HFactory.createSliceQuery(_keyspace, getKeySerializer(),
-            getTopSerializer(), getTopSerializer());
+            getColumnNameSerializer(), getColumnNameSerializer());
 
       query.setKey(tweetid);
       query.setColumnFamily(COLUMNFAMILY_NAME);
@@ -163,7 +163,12 @@ public class TweetDao
       tweetAccess.getTweet(id);
    }
 
-   TweetIterator getIterator()
+   /**
+    * Returns a Iterator to get all the tweets.
+    * 
+    * @return The iterator.
+    */
+   public TweetIterator getIterator()
    {
       return new TweetIterator(_keyspace);
    }
@@ -172,7 +177,7 @@ public class TweetDao
    {
       public TweetIterator(Keyspace keyspace)
       {
-         super(keyspace, COLUMNFAMILY_NAME, getKeySerializer(), StringSerializer.get());
+         super(keyspace, COLUMNFAMILY_NAME, getKeySerializer(), getColumnNameSerializer());
       }
 
       public long getUserId()

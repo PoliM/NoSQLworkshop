@@ -128,7 +128,7 @@ public class TweetDao
 
    }
 
-   private void getTweet(long tweetid)
+   public void getTweet(long tweetid)
    {
       SliceQuery<Long, String, String> query = HFactory.createSliceQuery(_keyspace, getKeySerializer(),
             getColumnNameSerializer(), getColumnNameSerializer());
@@ -156,7 +156,7 @@ public class TweetDao
       TweetIterator i = tweetAccess.getIterator();
       while (i.moveNextSkipEmptyRow())
       {
-         if (count % 1000 == 0)
+         if (count % 10000 == 0)
          {
             System.out.println(count + ": " + i.getKey() + ": userid=" + i.getUserId() + ", body=\"" + i.getBody()
                   + "\", createdAt=" + i.getCreatedAt());

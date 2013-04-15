@@ -1,5 +1,7 @@
 package ch.bbv.javacamp2013;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Date;
 
 import ch.bbv.javacamp2013.dao.JavacampKeyspace;
@@ -8,18 +10,16 @@ import ch.bbv.javacamp2013.dao.TweetDao.TweetIterator;
 
 public class AddEntriesToWordSearch
 {
-
-   private static String CLUSTER_ADRESS = "192.168.56.101:9160";
-
-   private static final String CLUSTER_NAME = "Test Cluster";
-
    /**
     * @param args
+    * @throws IOException
+    * @throws FileNotFoundException
     */
-   public static void main(String[] args)
+   public static void main(String[] args) throws FileNotFoundException, IOException
    {
-      System.out.println("Connecting to cluster " + CLUSTER_NAME + " @ " + CLUSTER_ADRESS);
-      JavacampKeyspace javacampKeyspace = new JavacampKeyspace(CLUSTER_NAME, CLUSTER_ADRESS);
+      Config cfg = new Config();
+      System.out.println("Connecting to cluster " + cfg.getClusterName() + " @ " + cfg.getClusterAddress());
+      JavacampKeyspace javacampKeyspace = new JavacampKeyspace(cfg.getClusterName(), cfg.getClusterAddress());
 
       long count = 0;
 
@@ -42,11 +42,12 @@ public class AddEntriesToWordSearch
             }
          }
          count++;
-         if (count % 100 == 0)
+         if (count % 1000 == 0)
          {
             System.out.println(System.currentTimeMillis() + ": added " + count);
          }
          // System.out.println(":" + createdAt + " ->" + key);
       }
+      System.out.println("Total=" + count);
    }
 }

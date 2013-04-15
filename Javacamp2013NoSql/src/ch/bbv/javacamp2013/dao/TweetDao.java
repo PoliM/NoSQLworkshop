@@ -1,5 +1,7 @@
 package ch.bbv.javacamp2013.dao;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
 
@@ -20,6 +22,7 @@ import me.prettyprint.hector.api.ddl.ComparatorType;
 import me.prettyprint.hector.api.exceptions.HectorException;
 import me.prettyprint.hector.api.factory.HFactory;
 import me.prettyprint.hector.api.query.SliceQuery;
+import ch.bbv.javacamp2013.Config;
 
 /**
  * Implements high level methods to access the "Tweets" column family (table).
@@ -143,24 +146,29 @@ public class TweetDao
       }
    }
 
-   public static void main(String[] args)
+   public static void main(String[] args) throws FileNotFoundException, IOException
    {
-      TweetDao tweetAccess = new JavacampKeyspace("Test Cluster", "192.168.56.101:9160").getTweetDao();
+      Config cfg = new Config();
+      System.out.println("Connecting to cluster " + cfg.getClusterName() + " @ " + cfg.getClusterAddress());
+      TweetDao tweetAccess = new JavacampKeyspace(cfg.getClusterName(), cfg.getClusterAddress()).getTweetDao();
 
       int count = 0;
       TweetIterator i = tweetAccess.getIterator();
       while (i.moveNextSkipEmptyRow())
       {
-         System.out.println(i.getKey() + ": userid=" + i.getUserId() + ", body=\"" + i.getBody() + "\", createdAt="
-               + i.getCreatedAt());
+         if (count % 1000 == 0)
+         {
+            System.out.println(count + ": " + i.getKey() + ": userid=" + i.getUserId() + ", body=\"" + i.getBody()
+                  + "\", createdAt=" + i.getCreatedAt());
+         }
          count++;
       }
       System.out.println("Total=" + count);
 
-      long id = 1234;
-      tweetAccess.addTweet(id, 23456, "My body", new Date());
-      tweetAccess.getTweet(id);
-      tweetAccess.getTweet(id);
+      // long id = 1234;
+      // tweetAccess.addTweet(id, 23456, "My body", new Date());
+      // tweetAccess.getTweet(id);
+      // tweetAccess.getTweet(id);
    }
 
    /**

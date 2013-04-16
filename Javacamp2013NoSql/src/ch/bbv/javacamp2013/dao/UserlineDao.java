@@ -1,17 +1,24 @@
 package ch.bbv.javacamp2013.dao;
 
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 import me.prettyprint.cassandra.serializers.DateSerializer;
 import me.prettyprint.cassandra.serializers.LongSerializer;
+import me.prettyprint.cassandra.service.template.ColumnFamilyResult;
 import me.prettyprint.cassandra.service.template.ColumnFamilyTemplate;
 import me.prettyprint.cassandra.service.template.ColumnFamilyUpdater;
 import me.prettyprint.cassandra.service.template.ThriftColumnFamilyTemplate;
 import me.prettyprint.hector.api.Keyspace;
+import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.ddl.ColumnFamilyDefinition;
 import me.prettyprint.hector.api.ddl.ComparatorType;
 import me.prettyprint.hector.api.exceptions.HectorException;
 import me.prettyprint.hector.api.factory.HFactory;
+import ch.bbv.javacamp2013.model.Tweet;
 
 /**
  * Implements high level methods to access the "Userline" column family (table).<br>
@@ -26,7 +33,6 @@ import me.prettyprint.hector.api.factory.HFactory;
  */
 public class UserlineDao
 {
-
    private static final String COLUMNFAMILY_NAME = "Userline";
 
    private final ColumnFamilyTemplate<Long, Date> _template;
@@ -59,6 +65,21 @@ public class UserlineDao
       {
          e.printStackTrace();
       }
+   }
+
+   public List<Tweet> getUserline(long userId, TweetDao tweetDao)
+   {
+      ColumnFamilyResult<Long, Date> res = _template.queryColumns(userId);
+
+      Collection<Date> columnNames = res.getColumnNames();
+      List<Long> tweetIds = new ArrayList<>(columnNames.size());
+      for (Date date : columnNames)
+      {
+         HColumn<Date, ByteBuffer> column = res.getColumn(date);
+         tweetIds.add(LongSerializer.get().fromByteBuffer(column.getValue()));
+      }
+
+      return tweetDao.getTweets(tweetIds);
    }
 
    static ColumnFamilyDefinition getColumnFamilyDefinition(String keyspacename)

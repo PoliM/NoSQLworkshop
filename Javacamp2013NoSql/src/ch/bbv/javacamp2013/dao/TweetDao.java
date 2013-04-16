@@ -4,6 +4,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 
 import me.prettyprint.cassandra.model.BasicColumnDefinition;
 import me.prettyprint.cassandra.serializers.DateSerializer;
@@ -131,11 +133,30 @@ public class TweetDao
    {
       ColumnFamilyResult<Long, String> res = _template.queryColumns(tweetid);
 
+      return getTweet(res);
+   }
+
+   private Tweet getTweet(ColumnFamilyResult<Long, String> res)
+   {
+      long tweetId = res.getLong(COL_TWEET_ID);
       long userId = res.getLong(COL_USER_ID);
       String body = res.getString(COL_BODY);
       Date createdAt = res.getDate(COL_CREATED_AT);
 
-      return new Tweet(tweetid, userId, body, createdAt);
+      return new Tweet(tweetId, userId, body, createdAt);
+   }
+
+   public List<Tweet> getTweets(List<Long> tweetIds)
+   {
+      List<Tweet> tweets = new LinkedList<>();
+      ColumnFamilyResult<Long, String> res = _template.queryColumns(tweetIds);
+
+      while (res.hasNext())
+      {
+         tweets.add(getTweet(res));
+         res.next();
+      }
+      return tweets;
    }
 
    public static void main(String[] args) throws FileNotFoundException, IOException

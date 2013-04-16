@@ -12,6 +12,7 @@ import twitter4j.TwitterStreamFactory;
 import twitter4j.User;
 import twitter4j.conf.ConfigurationBuilder;
 import ch.bbv.javacamp2013.dao.JavacampKeyspace;
+import ch.bbv.javacamp2013.model.Tweet;
 
 public class TwitterStreamHandler implements StatusListener
 {
@@ -48,7 +49,7 @@ public class TwitterStreamHandler implements StatusListener
       long tweetId = status.getId();
       Date createdAt = status.getCreatedAt();
       javacampKeyspace.getUserDao().addUser(userId, user.getName(), user.getScreenName());
-      javacampKeyspace.getTweetDao().addTweet(tweetId, userId, status.getText(), createdAt);
+      javacampKeyspace.getTweetDao().addTweet(new Tweet(tweetId, userId, status.getText(), createdAt));
       javacampKeyspace.getUserlineDao().addUserlineEntry(userId, createdAt, tweetId);
    }
 

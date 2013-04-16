@@ -35,7 +35,7 @@ import me.prettyprint.hector.api.query.RangeSlicesQuery;
  */
 public class RowIterator<K, N>
 {
-   private static final int ROW_COUNT = 100;
+   private static final int ROW_COUNT = 10000;
 
    private final RangeSlicesQuery<K, N, ByteBuffer> rangeSlicesQuery;
 

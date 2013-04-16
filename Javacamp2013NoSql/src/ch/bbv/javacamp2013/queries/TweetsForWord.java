@@ -10,6 +10,7 @@ import ch.bbv.javacamp2013.Config;
 import ch.bbv.javacamp2013.dao.JavacampKeyspace;
 import ch.bbv.javacamp2013.dao.TweetDao;
 import ch.bbv.javacamp2013.dao.WordSearchDao;
+import ch.bbv.javacamp2013.model.Tweet;
 
 public class TweetsForWord
 {
@@ -27,12 +28,13 @@ public class TweetsForWord
       WordSearchDao wordSearch = javacampKeyspace.getWordSearchDao();
       TweetDao tweetDao = javacampKeyspace.getTweetDao();
 
-      TreeMap<Date, Long> tweetIds = wordSearch.getTweetIdsForWord("marco");
+      TreeMap<Date, Long> tweetIds = wordSearch.getTweetIdsForWord("password");
 
       for (Map.Entry<Date, Long> entry : tweetIds.entrySet())
       {
          System.out.println(entry.getKey() + " / " + entry.getValue());
-         tweetDao.getTweet(entry.getValue());
+         Tweet tweet = tweetDao.getTweet(entry.getValue());
+         System.out.println(tweet);
       }
    }
 }

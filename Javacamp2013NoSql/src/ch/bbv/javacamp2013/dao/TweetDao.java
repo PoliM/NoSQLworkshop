@@ -9,20 +9,19 @@ import me.prettyprint.cassandra.model.BasicColumnDefinition;
 import me.prettyprint.cassandra.serializers.DateSerializer;
 import me.prettyprint.cassandra.serializers.LongSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
-import me.prettyprint.cassandra.service.ColumnSliceIterator;
+import me.prettyprint.cassandra.service.template.ColumnFamilyResult;
 import me.prettyprint.cassandra.service.template.ColumnFamilyTemplate;
 import me.prettyprint.cassandra.service.template.ColumnFamilyUpdater;
 import me.prettyprint.cassandra.service.template.ThriftColumnFamilyTemplate;
 import me.prettyprint.hector.api.Keyspace;
-import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.ddl.ColumnDefinition;
 import me.prettyprint.hector.api.ddl.ColumnFamilyDefinition;
 import me.prettyprint.hector.api.ddl.ColumnIndexType;
 import me.prettyprint.hector.api.ddl.ComparatorType;
 import me.prettyprint.hector.api.exceptions.HectorException;
 import me.prettyprint.hector.api.factory.HFactory;
-import me.prettyprint.hector.api.query.SliceQuery;
 import ch.bbv.javacamp2013.Config;
+import ch.bbv.javacamp2013.model.Tweet;
 
 /**
  * Implements high level methods to access the "Tweets" column family (table).
@@ -81,13 +80,13 @@ public class TweetDao
     * @param body The message of the tweet.
     * @param createdAt The time when the tweet was created.
     */
-   public void addTweet(long tweetid, long userid, String body, Date createdAt)
+   public void addTweet(Tweet tweet)
    {
-      ColumnFamilyUpdater<Long, String> updater = _template.createUpdater(tweetid);
-      updater.setLong(COL_TWEET_ID, tweetid);
-      updater.setLong(COL_USER_ID, userid);
-      updater.setString(COL_BODY, body);
-      updater.setDate(COL_CREATED_AT, createdAt);
+      ColumnFamilyUpdater<Long, String> updater = _template.createUpdater(tweet.getTweetid());
+      updater.setLong(COL_TWEET_ID, tweet.getTweetid());
+      updater.setLong(COL_USER_ID, tweet.getUserid());
+      updater.setString(COL_BODY, tweet.getBody());
+      updater.setDate(COL_CREATED_AT, tweet.getCreatedAt());
 
       try
       {
@@ -128,22 +127,15 @@ public class TweetDao
 
    }
 
-   public void getTweet(long tweetid)
+   public Tweet getTweet(long tweetid)
    {
-      SliceQuery<Long, String, String> query = HFactory.createSliceQuery(_keyspace, getKeySerializer(),
-            getColumnNameSerializer(), getColumnNameSerializer());
+      ColumnFamilyResult<Long, String> res = _template.queryColumns(tweetid);
 
-      query.setKey(tweetid);
-      query.setColumnFamily(COLUMNFAMILY_NAME);
+      long userId = res.getLong(COL_USER_ID);
+      String body = res.getString(COL_BODY);
+      Date createdAt = res.getDate(COL_CREATED_AT);
 
-      ColumnSliceIterator<Long, String, String> iterator = new ColumnSliceIterator<Long, String, String>(query, null,
-            "\uFFFF", false);
-
-      while (iterator.hasNext())
-      {
-         HColumn<String, String> col = iterator.next();
-         System.out.println(col.getName() + "=\"" + col.getValue() + "\"");
-      }
+      return new Tweet(tweetid, userId, body, createdAt);
    }
 
    public static void main(String[] args) throws FileNotFoundException, IOException

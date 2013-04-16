@@ -9,8 +9,10 @@ import java.util.TreeMap;
 import ch.bbv.javacamp2013.Config;
 import ch.bbv.javacamp2013.dao.JavacampKeyspace;
 import ch.bbv.javacamp2013.dao.TweetDao;
+import ch.bbv.javacamp2013.dao.UserDao;
 import ch.bbv.javacamp2013.dao.WordSearchDao;
 import ch.bbv.javacamp2013.model.Tweet;
+import ch.bbv.javacamp2013.model.User;
 
 public class TweetsForWord
 {
@@ -27,14 +29,19 @@ public class TweetsForWord
 
       WordSearchDao wordSearch = javacampKeyspace.getWordSearchDao();
       TweetDao tweetDao = javacampKeyspace.getTweetDao();
+      UserDao userDao = javacampKeyspace.getUserDao();
 
-      TreeMap<Date, Long> tweetIds = wordSearch.getTweetIdsForWord("password");
+      TreeMap<Date, Long> tweetIds = wordSearch.getTweetIdsForWord("schweiz");
 
+      System.out.println("# of tweets: " + tweetIds.size());
       for (Map.Entry<Date, Long> entry : tweetIds.entrySet())
       {
          System.out.println(entry.getKey() + " / " + entry.getValue());
          Tweet tweet = tweetDao.getTweet(entry.getValue());
+         User user = userDao.getUser(tweet.getUserid());
+         System.out.println(user);
          System.out.println(tweet);
       }
+
    }
 }

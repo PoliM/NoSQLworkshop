@@ -48,7 +48,8 @@ public class TwitterStreamHandler implements StatusListener
       long userId = user.getId();
       long tweetId = status.getId();
       Date createdAt = status.getCreatedAt();
-      javacampKeyspace.getUserDao().addUser(userId, user.getName(), user.getScreenName());
+      javacampKeyspace.getUserDao().addUser(
+            new ch.bbv.javacamp2013.model.User(userId, user.getName(), user.getScreenName()));
       javacampKeyspace.getTweetDao().addTweet(new Tweet(tweetId, userId, status.getText(), createdAt));
       javacampKeyspace.getUserlineDao().addUserlineEntry(userId, createdAt, tweetId);
    }

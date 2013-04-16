@@ -86,7 +86,7 @@ public class WordSearchDao
       TreeMap<Date, Long> result = new TreeMap<>();
       try
       {
-         ColumnFamilyResult<String, Date> res = _template.queryColumns(word);
+         ColumnFamilyResult<String, Date> res = _template.queryColumns(word.toLowerCase());
 
          for (Date date : res.getColumnNames())
          {

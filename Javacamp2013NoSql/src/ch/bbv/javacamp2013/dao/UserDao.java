@@ -1,10 +1,13 @@
 package ch.bbv.javacamp2013.dao;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Arrays;
 
 import me.prettyprint.cassandra.model.BasicColumnDefinition;
 import me.prettyprint.cassandra.serializers.LongSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
+import me.prettyprint.cassandra.service.template.ColumnFamilyResult;
 import me.prettyprint.cassandra.service.template.ColumnFamilyTemplate;
 import me.prettyprint.cassandra.service.template.ColumnFamilyUpdater;
 import me.prettyprint.cassandra.service.template.ThriftColumnFamilyTemplate;
@@ -15,6 +18,8 @@ import me.prettyprint.hector.api.ddl.ColumnIndexType;
 import me.prettyprint.hector.api.ddl.ComparatorType;
 import me.prettyprint.hector.api.exceptions.HectorException;
 import me.prettyprint.hector.api.factory.HFactory;
+import ch.bbv.javacamp2013.Config;
+import ch.bbv.javacamp2013.model.User;
 
 /**
  * Implements high level methods to access the "Users" column family (table). To
@@ -68,12 +73,12 @@ public class UserDao
     * @param name The name of the user.
     * @param screenName The screen name of the user.
     */
-   public void addUser(long userid, String name, String screenName)
+   public void addUser(User user)
    {
-      ColumnFamilyUpdater<Long, String> updater = _template.createUpdater(userid);
-      updater.setLong(COL_USER_ID, userid);
-      updater.setString(COL_NAME, name);
-      updater.setString(COL_SCREEN_NAME, screenName);
+      ColumnFamilyUpdater<Long, String> updater = _template.createUpdater(user.getUserid());
+      updater.setLong(COL_USER_ID, user.getUserid());
+      updater.setString(COL_NAME, user.getName());
+      updater.setString(COL_SCREEN_NAME, user.getScreenName());
 
       try
       {
@@ -83,6 +88,16 @@ public class UserDao
       {
          e.printStackTrace();
       }
+   }
+
+   public User getUser(long userId)
+   {
+      ColumnFamilyResult<Long, String> res = _template.queryColumns(userId);
+
+      String name = res.getString(COL_NAME);
+      String screenName = res.getString(COL_SCREEN_NAME);
+
+      return new User(userId, name, screenName);
    }
 
    static ColumnFamilyDefinition getColumnFamilyDefinition(String keyspacename)
@@ -143,4 +158,23 @@ public class UserDao
       }
    }
 
+   public static void main(String[] args) throws FileNotFoundException, IOException
+   {
+      Config cfg = new Config();
+      System.out.println("Connecting to cluster " + cfg.getClusterName() + " @ " + cfg.getClusterAddress());
+      UserDao userAccess = new JavacampKeyspace(cfg.getClusterName(), cfg.getClusterAddress()).getUserDao();
+
+      int count = 0;
+      UserIterator i = userAccess.getIterator();
+      while (i.moveNextSkipEmptyRow())
+      {
+         if (count % 10000 == 0)
+         {
+            System.out.println(count + ": " + i.getKey() + ": userid=" + i.getUserId() + ", name=\"" + i.getName()
+                  + "\", screenName=" + i.getScreenName());
+         }
+         count++;
+      }
+      System.out.println("Total=" + count);
+   }
 }

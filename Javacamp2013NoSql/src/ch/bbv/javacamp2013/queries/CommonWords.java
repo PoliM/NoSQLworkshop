@@ -7,25 +7,36 @@ import java.io.InputStreamReader;
 import java.util.Set;
 import java.util.TreeSet;
 
-public class CommonWords
-{
+/**
+ * A class that holds a dictionary of common words. In this case it reads the
+ * words from english-words.95.
+ */
+public class CommonWords {
    private final Set<String> words = new TreeSet<>();
 
-   public CommonWords() throws IOException
-   {
-      InputStream is = this.getClass().getResourceAsStream("english-words.95");
-      BufferedReader br = new BufferedReader(new InputStreamReader(is));
+   /**
+    * Creates a new instance.
+    * 
+    * @throws IOException If the word list could not be read.
+    */
+   public CommonWords() throws IOException {
+      final InputStream is = this.getClass().getResourceAsStream("english-words.95");
+      final BufferedReader br = new BufferedReader(new InputStreamReader(is));
 
       String line = br.readLine();
-      while (line != null)
-      {
+      while (line != null) {
          words.add(line.trim());
          line = br.readLine();
       }
    }
 
-   public boolean hasWord(String word)
-   {
+   /**
+    * Checks a word.
+    * 
+    * @param word The word.
+    * @return True if the word is in the dictionary.
+    */
+   public boolean hasWord(final String word) {
       return words.contains(word);
    }
 }

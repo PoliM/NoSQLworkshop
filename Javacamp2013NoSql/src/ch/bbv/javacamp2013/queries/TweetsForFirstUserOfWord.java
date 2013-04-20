@@ -1,10 +1,9 @@
 package ch.bbv.javacamp2013.queries;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
-import java.util.TreeMap;
+import java.util.Map;
 
 import ch.bbv.javacamp2013.Config;
 import ch.bbv.javacamp2013.dao.JavacampKeyspace;
@@ -15,40 +14,41 @@ import ch.bbv.javacamp2013.dao.WordSearchDao;
 import ch.bbv.javacamp2013.model.Tweet;
 import ch.bbv.javacamp2013.model.User;
 
-public class TweetsForFirstUserOfWord
-{
+/**
+ * Program that reads the tweets of a user.
+ */
+public final class TweetsForFirstUserOfWord {
+
+   private TweetsForFirstUserOfWord() {
+   }
 
    /**
-    * @param args
-    * @throws IOException
-    * @throws FileNotFoundException
+    * @param args The command line arguments.
+    * @throws IOException If the configuration could not be read.
     */
-   public static void main(String[] args) throws FileNotFoundException, IOException
-   {
-      Config cfg = new Config();
-      JavacampKeyspace javacampKeyspace = new JavacampKeyspace(cfg.getClusterName(), cfg.getClusterAddress());
+   public static void main(final String[] args) throws IOException {
+      final Config cfg = new Config();
+      final JavacampKeyspace javacampKeyspace = new JavacampKeyspace(cfg.getClusterName(), cfg.getClusterAddress());
 
-      WordSearchDao wordSearch = javacampKeyspace.getWordSearchDao();
-      TweetDao tweetDao = javacampKeyspace.getTweetDao();
-      UserDao userDao = javacampKeyspace.getUserDao();
-      UserlineDao userlineDao = javacampKeyspace.getUserlineDao();
+      final WordSearchDao wordSearch = javacampKeyspace.getWordSearchDao();
+      final TweetDao tweetDao = javacampKeyspace.getTweetDao();
+      final UserDao userDao = javacampKeyspace.getUserDao();
+      final UserlineDao userlineDao = javacampKeyspace.getUserlineDao();
 
-      TreeMap<Date, Long> tweetIds = wordSearch.getTweetIdsForWord("schweiz");
+      final Map<Date, Long> tweetIds = wordSearch.getTweetIdsForWord("markus");
 
-      if (tweetIds.size() > 0)
-      {
-         long tweetId = tweetIds.entrySet().iterator().next().getValue();
+      if (!tweetIds.isEmpty()) {
+         final long tweetId = tweetIds.entrySet().iterator().next().getValue();
 
-         Tweet tweet = tweetDao.getTweet(tweetId);
+         final Tweet tweet = tweetDao.getTweet(tweetId);
          System.out.println(tweet);
 
-         User user = userDao.getUser(tweet.getUserid());
+         final User user = userDao.getUser(tweet.getUserid());
          System.out.println(user);
 
-         List<Tweet> userline = userlineDao.getUserline(user.getUserid(), tweetDao);
+         final List<Tweet> userline = userlineDao.getUserline(user.getUserid(), tweetDao);
          System.out.println("# of tweets: " + userline.size());
-         for (Tweet tweet2 : userline)
-         {
+         for (Tweet tweet2 : userline) {
             System.out.println(tweet2);
          }
       }

@@ -1,6 +1,5 @@
 package ch.bbv.javacamp2013.queries;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Set;
 import java.util.TreeSet;
@@ -10,55 +9,54 @@ import ch.bbv.javacamp2013.dao.JavacampKeyspace;
 import ch.bbv.javacamp2013.dao.WordSearchDao;
 import ch.bbv.javacamp2013.dao.WordSearchDao.WordIterator;
 
-public class WordList
-{
+/**
+ * Program to get all the words in the search index.
+ */
+public final class WordList {
+
+   private static final int REPORT_THRESHOLD = 1000;
+
+   private WordList() {
+   }
 
    /**
-    * @param args
-    * @throws IOException
-    * @throws FileNotFoundException
+    * @param args Command line arguments.
+    * @throws IOException If the configuration could not be read.
     */
-   public static void main(String[] args) throws FileNotFoundException, IOException
-   {
-      Config cfg = new Config();
-      JavacampKeyspace javacampKeyspace = new JavacampKeyspace(cfg.getClusterName(), cfg.getClusterAddress());
+   public static void main(final String[] args) throws IOException {
+      final Config cfg = new Config();
+      final JavacampKeyspace javacampKeyspace = new JavacampKeyspace(cfg.getClusterName(), cfg.getClusterAddress());
 
-      Set<String> words = new TreeSet<>();
-      Set<String> wordsInCommon = new TreeSet<>();
+      final Set<String> words = new TreeSet<>();
+      final Set<String> wordsInCommon = new TreeSet<>();
 
-      CommonWords commonWords = new CommonWords();
+      final CommonWords commonWords = new CommonWords();
 
-      WordSearchDao wordSearch = javacampKeyspace.getWordSearchDao();
+      final WordSearchDao wordSearch = javacampKeyspace.getWordSearchDao();
       int count = 0;
-      WordIterator i = wordSearch.getIterator();
-      while (i.moveNextSkipEmptyRow())
-      {
+      final WordIterator i = wordSearch.getIterator();
+      while (i.moveNextSkipEmptyRow()) {
          words.add(i.getKey());
 
-         if (commonWords.hasWord(i.getKey()))
-         {
+         if (commonWords.hasWord(i.getKey())) {
             wordsInCommon.add(i.getKey());
          }
 
-         if (count % 1000 == 0)
-         {
+         if (count % REPORT_THRESHOLD == 0) {
             System.out.println(count + ": " + i.getKey());
          }
          count++;
       }
 
       String currentPrefix = "";
-      for (String word : wordsInCommon)
-      {
-         String prefix = word.substring(0, 2);
-         if (!prefix.equals(currentPrefix))
-         {
+      for (String word : wordsInCommon) {
+         final String prefix = word.substring(0, 2);
+         if (!prefix.equals(currentPrefix)) {
             currentPrefix = prefix;
             System.out.println();
             System.out.print(word);
          }
-         else
-         {
+         else {
             System.out.print(", ");
             System.out.print(word);
          }

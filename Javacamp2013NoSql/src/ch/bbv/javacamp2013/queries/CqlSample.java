@@ -1,6 +1,5 @@
 package ch.bbv.javacamp2013.queries;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import me.prettyprint.cassandra.model.CqlQuery;
@@ -13,29 +12,33 @@ import me.prettyprint.hector.api.factory.HFactory;
 import me.prettyprint.hector.api.query.QueryResult;
 import ch.bbv.javacamp2013.Config;
 
-public class CqlSample
-{
+/**
+ * A simple CQL sample.
+ */
+public final class CqlSample {
+
+   private CqlSample() {
+   }
 
    /**
-    * @param args
-    * @throws IOException
-    * @throws FileNotFoundException
+    * Starts the program.
+    * 
+    * @param args Command line arguments
+    * @throws IOException If the configuration could not be read.
     */
-   public static void main(String[] args) throws FileNotFoundException, IOException
-   {
-      Config cfg = new Config();
-      Cluster cluster = HFactory.getOrCreateCluster(cfg.getClusterName(), cfg.getClusterAddress());
+   public static void main(final String[] args) throws IOException {
+      final Config cfg = new Config();
+      final Cluster cluster = HFactory.getOrCreateCluster(cfg.getClusterName(), cfg.getClusterAddress());
 
-      Keyspace systemKeyspace = HFactory.createKeyspace("system", cluster);
-      CqlQuery<String, String, String> cqlQuery = new CqlQuery<>(systemKeyspace, StringSerializer.get(),
+      final Keyspace systemKeyspace = HFactory.createKeyspace("system", cluster);
+      final CqlQuery<String, String, String> cqlQuery = new CqlQuery<>(systemKeyspace, StringSerializer.get(),
             StringSerializer.get(), StringSerializer.get());
 
       cqlQuery.setQuery("select * from schema_keyspaces");
       // cqlQuery.setQuery("select * from local");
-      QueryResult<CqlRows<String, String, String>> result = cqlQuery.execute();
+      final QueryResult<CqlRows<String, String, String>> result = cqlQuery.execute();
 
-      for (Row<String, String, String> row : result.get())
-      {
+      for (Row<String, String, String> row : result.get()) {
          System.out.println(row);
       }
    }

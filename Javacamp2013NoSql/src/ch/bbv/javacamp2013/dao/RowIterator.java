@@ -33,8 +33,9 @@ import me.prettyprint.hector.api.query.RangeSlicesQuery;
  * @param <K> The type of the row key
  * @param <N> The type of the column names
  */
-public class RowIterator<K, N>
-{
+public class RowIterator<K, N> {
+   private static final int MAX_COLS = 10;
+
    private static final int ROW_COUNT = 10000;
 
    private final RangeSlicesQuery<K, N, ByteBuffer> rangeSlicesQuery;
@@ -45,35 +46,40 @@ public class RowIterator<K, N>
 
    private Row<K, N, ByteBuffer> row;
 
-   protected RowIterator(Keyspace keyspace, String columnFamilyName, Serializer<K> keySerializer,
-         Serializer<N> nameSerializer)
-   {
-      rangeSlicesQuery = HFactory.createRangeSlicesQuery(keyspace, keySerializer, nameSerializer,
+   /**
+    * Creates a new iterator.
+    * 
+    * @param keyspace The keyspace of the db.
+    * @param columnFamilyName For which column family.
+    * @param keySerializer The serializer of the key.
+    * @param nameSerializer The seciralizer of the names.
+    */
+   protected RowIterator(final Keyspace keyspace, final String columnFamilyName, final Serializer<K> keySerializer,
+         final Serializer<N> nameSerializer) {
+      this.rangeSlicesQuery = HFactory.createRangeSlicesQuery(keyspace, keySerializer, nameSerializer,
             ByteBufferSerializer.get());
 
-      rangeSlicesQuery.setColumnFamily(columnFamilyName);
-      rangeSlicesQuery.setRange(null, null, false, 10);
-      rangeSlicesQuery.setRowCount(ROW_COUNT);
+      this.rangeSlicesQuery.setColumnFamily(columnFamilyName);
+      this.rangeSlicesQuery.setRange(null, null, false, MAX_COLS);
+      this.rangeSlicesQuery.setRowCount(ROW_COUNT);
 
       loadRowsPaged();
    }
 
-   private void loadRowsPaged()
-   {
-      K keyOfLastRow = (row == null) ? null : row.getKey();
+   private void loadRowsPaged() {
+      final K keyOfLastRow = (this.row == null) ? null : this.row.getKey();
 
-      rangeSlicesQuery.setKeys(keyOfLastRow, null);
+      this.rangeSlicesQuery.setKeys(keyOfLastRow, null);
       // System.out.println(" > " + keyOfLastRow);
 
-      QueryResult<OrderedRows<K, N, ByteBuffer>> result = rangeSlicesQuery.execute();
-      rows = result.get();
-      rowsIterator = rows.iterator();
+      final QueryResult<OrderedRows<K, N, ByteBuffer>> result = this.rangeSlicesQuery.execute();
+      this.rows = result.get();
+      this.rowsIterator = this.rows.iterator();
 
       // we'll skip this first one, since it is the same as the last one
       // from previous time we executed
-      if (keyOfLastRow != null && rowsIterator != null)
-      {
-         rowsIterator.next();
+      if (keyOfLastRow != null && this.rowsIterator != null) {
+         this.rowsIterator.next();
       }
    }
 
@@ -82,23 +88,19 @@ public class RowIterator<K, N>
     * 
     * @return true if it now points to a row, else it returns false.
     */
-   public boolean moveNext()
-   {
+   public final boolean moveNext() {
       // check if we have read all the "paged" rows
-      if (!rowsIterator.hasNext())
-      {
+      if (!this.rowsIterator.hasNext()) {
          // if that was the last page, we are done, return false
-         if (rows.getCount() < ROW_COUNT)
-         {
-            row = null;
+         if (this.rows.getCount() < ROW_COUNT) {
+            this.row = null;
             return false;
          }
-         else
-         {
-            loadRowsPaged();
+         else {
+            this.loadRowsPaged();
          }
       }
-      row = rowsIterator.next();
+      this.row = this.rowsIterator.next();
       return true;
    }
 
@@ -107,12 +109,9 @@ public class RowIterator<K, N>
     * 
     * @return true if it now points to a row, else it returns false.
     */
-   public boolean moveNextSkipEmptyRow()
-   {
-      while (moveNext())
-      {
-         if (!row.getColumnSlice().getColumns().isEmpty())
-         {
+   public final boolean moveNextSkipEmptyRow() {
+      while (this.moveNext()) {
+         if (!this.row.getColumnSlice().getColumns().isEmpty()) {
             return true;
          }
       }
@@ -122,9 +121,8 @@ public class RowIterator<K, N>
    /**
     * @return The key of the current row.
     */
-   public K getKey()
-   {
-      return row.getKey();
+   public final K getKey() {
+      return this.row.getKey();
    }
 
    /**
@@ -133,8 +131,7 @@ public class RowIterator<K, N>
     * @param columnName The column name.
     * @return the value
     */
-   public ByteBuffer getValueByColumnName(N columnName)
-   {
-      return row.getColumnSlice().getColumnByName(columnName).getValue();
+   public final ByteBuffer getValueByColumnName(final N columnName) {
+      return this.row.getColumnSlice().getColumnByName(columnName).getValue();
    }
 }

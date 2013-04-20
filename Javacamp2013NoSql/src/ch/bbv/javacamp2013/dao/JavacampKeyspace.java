@@ -15,81 +15,77 @@ import me.prettyprint.hector.api.factory.HFactory;
  * The main class for accessing cassandra. It returns instances of the different
  * DAOs to access cassandra.
  */
-public class JavacampKeyspace
-{
+public class JavacampKeyspace {
 
    private static final String KEYSPACE_NAME = "javacamp";
 
-   private final TweetDao _tweetDao;
+   private final TweetDao tweetDao;
 
-   private final UserDao _userDao;
+   private final UserDao userDao;
 
-   private final UserlineDao _userlineDao;
+   private final UserlineDao userlineDao;
 
-   private final WordSearchDao _wordSearchDao;
+   private final WordSearchDao wordSearchDao;
 
-   public JavacampKeyspace(String clusterName, String hostIp)
-   {
-      Cluster myCluster = HFactory.getOrCreateCluster(clusterName, hostIp);
+   /**
+    * Creates a new Javacamp keyspace.
+    * 
+    * @param clusterName Name of the cluster.
+    * @param hostIp IP of the cluster initial node.
+    */
+   public JavacampKeyspace(final String clusterName, final String hostIp) {
+      final Cluster myCluster = HFactory.getOrCreateCluster(clusterName, hostIp);
 
       setupKeyspaceDefinition(myCluster);
 
-      Keyspace ksp = HFactory.createKeyspace(KEYSPACE_NAME, myCluster);
+      final Keyspace ksp = HFactory.createKeyspace(KEYSPACE_NAME, myCluster);
 
-      _tweetDao = new TweetDao(ksp);
-      _userDao = new UserDao(ksp);
-      _userlineDao = new UserlineDao(ksp);
-      _wordSearchDao = new WordSearchDao(ksp);
+      tweetDao = new TweetDao(ksp);
+      userDao = new UserDao(ksp);
+      userlineDao = new UserlineDao(ksp);
+      wordSearchDao = new WordSearchDao(ksp);
    }
 
-   public TweetDao getTweetDao()
-   {
-      return _tweetDao;
+   public TweetDao getTweetDao() {
+      return tweetDao;
    }
 
-   public UserDao getUserDao()
-   {
-      return _userDao;
+   public UserDao getUserDao() {
+      return userDao;
    }
 
-   public UserlineDao getUserlineDao()
-   {
-      return _userlineDao;
+   public UserlineDao getUserlineDao() {
+      return userlineDao;
    }
 
-   public WordSearchDao getWordSearchDao()
-   {
-      return _wordSearchDao;
+   public WordSearchDao getWordSearchDao() {
+      return wordSearchDao;
    }
 
-   private static void setupKeyspaceDefinition(Cluster myCluster)
-   {
+   private static void setupKeyspaceDefinition(final Cluster myCluster) {
       // Check if the keyspace is present, if not create it
-      KeyspaceDefinition keyspaceDef = myCluster.describeKeyspace(KEYSPACE_NAME);
-      if (keyspaceDef == null)
-      {
+      final KeyspaceDefinition keyspaceDef = myCluster.describeKeyspace(KEYSPACE_NAME);
+      if (keyspaceDef == null) {
          createSchema(myCluster);
       }
-      else if (!hasColumnFamily(keyspaceDef, WordSearchDao.getColumnFamilName()))
-      {
+      else if (!hasColumnFamily(keyspaceDef, WordSearchDao.getColumnFamilName())) {
          // WordSearch ColumnFamily was not included in first version
          addWordSearchColumnFamily(myCluster);
       }
    }
 
-   private static KeyspaceDefinition createSchema(Cluster myCluster)
-   {
+   private static KeyspaceDefinition createSchema(final Cluster myCluster) {
       // get the definition for every column family (table)
-      ColumnFamilyDefinition tweetDef = TweetDao.getColumnFamilyDefinition(KEYSPACE_NAME);
+      final ColumnFamilyDefinition tweetDef = TweetDao.getColumnFamilyDefinition(KEYSPACE_NAME);
 
-      ColumnFamilyDefinition userDef = UserDao.getColumnFamilyDefinition(KEYSPACE_NAME);
+      final ColumnFamilyDefinition userDef = UserDao.getColumnFamilyDefinition(KEYSPACE_NAME);
 
-      ColumnFamilyDefinition userlineDef = UserlineDao.getColumnFamilyDefinition(KEYSPACE_NAME);
+      final ColumnFamilyDefinition userlineDef = UserlineDao.getColumnFamilyDefinition(KEYSPACE_NAME);
 
-      ColumnFamilyDefinition wordSearchDef = WordSearchDao.getColumnFamilyDefinition(KEYSPACE_NAME);
+      final ColumnFamilyDefinition wordSearchDef = WordSearchDao.getColumnFamilyDefinition(KEYSPACE_NAME);
 
       // create the definition for the keyspace
-      KeyspaceDefinition newKeyspace = HFactory.createKeyspaceDefinition( // nl
+      final KeyspaceDefinition newKeyspace = HFactory.createKeyspaceDefinition(//
             KEYSPACE_NAME, // keyspaceName
             ThriftKsDef.DEF_STRATEGY_CLASS, // strategyClass
             3, // replicationFactor
@@ -101,22 +97,18 @@ public class JavacampKeyspace
       return newKeyspace;
    }
 
-   private static void addWordSearchColumnFamily(Cluster myCluster)
-   {
-      ColumnFamilyDefinition wordSearchDef = WordSearchDao.getColumnFamilyDefinition(KEYSPACE_NAME);
+   private static void addWordSearchColumnFamily(final Cluster myCluster) {
+      final ColumnFamilyDefinition wordSearchDef = WordSearchDao.getColumnFamilyDefinition(KEYSPACE_NAME);
 
       myCluster.addColumnFamily(wordSearchDef, true);
    }
 
-   private static boolean hasColumnFamily(KeyspaceDefinition keyspaceDef, String columnFamilName)
-   {
-      List<ColumnFamilyDefinition> defs = keyspaceDef.getCfDefs();
-      Iterator<ColumnFamilyDefinition> i = defs.iterator();
-      while (i.hasNext())
-      {
-         ColumnFamilyDefinition columnFamilyDefinition = i.next();
-         if (columnFamilyDefinition.getName().equals(columnFamilName))
-         {
+   private static boolean hasColumnFamily(final KeyspaceDefinition keyspaceDef, final String columnFamilName) {
+      final List<ColumnFamilyDefinition> defs = keyspaceDef.getCfDefs();
+      final Iterator<ColumnFamilyDefinition> iter = defs.iterator();
+      while (iter.hasNext()) {
+         final ColumnFamilyDefinition columnFamilyDefinition = iter.next();
+         if (columnFamilyDefinition.getName().equals(columnFamilName)) {
             return true;
          }
       }

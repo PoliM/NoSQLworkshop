@@ -1,6 +1,5 @@
 package ch.bbv.javacamp2013.dao;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
@@ -38,8 +37,9 @@ import ch.bbv.javacamp2013.model.Tweet;
  * created.</li>
  * </ul>
  */
-public class TweetDao
-{
+public class TweetDao {
+   private static final int REPORT_THRESHOLD = 10000;
+
    private static final String COLUMNFAMILY_NAME = "Tweets";
 
    private static final String COL_TWEET_ID = "id";
@@ -50,127 +50,139 @@ public class TweetDao
 
    private static final String COL_CREATED_AT = "created_at";
 
-   private final Keyspace _keyspace;
+   private final Keyspace keyspace;
 
-   private final ColumnFamilyTemplate<Long, String> _template;
+   private final ColumnFamilyTemplate<Long, String> template;
 
-   private static LongSerializer getKeySerializer()
-   {
-      return LongSerializer.get();
-   }
+   /**
+    * Creates a new dao.
+    * 
+    * @param keyspace The keyspace.
+    */
+   TweetDao(final Keyspace keyspace) {
+      this.keyspace = keyspace;
 
-   private static StringSerializer getColumnNameSerializer()
-   {
-      return StringSerializer.get();
-   }
-
-   TweetDao(Keyspace keyspace)
-   {
-      _keyspace = keyspace;
-
-      _template = new ThriftColumnFamilyTemplate<Long, String>(_keyspace, // keyspace
+      template = new ThriftColumnFamilyTemplate<Long, String>(keyspace, // keyspace
             COLUMNFAMILY_NAME, // columnFamily
             getKeySerializer(), // keySerializer
             getColumnNameSerializer()); // topSerializer
    }
 
    /**
-    * Adds an tweet to the column family (table)
+    * Adds an tweet to the column family (table).
     * 
-    * @param tweetid The id of the tweet.
-    * @param userid The id of the user, that created the tweet.
-    * @param body The message of the tweet.
-    * @param createdAt The time when the tweet was created.
+    * @param tweet The tweet.
     */
-   public void addTweet(Tweet tweet)
-   {
-      ColumnFamilyUpdater<Long, String> updater = _template.createUpdater(tweet.getTweetid());
+   public final void addTweet(final Tweet tweet) {
+      final ColumnFamilyUpdater<Long, String> updater = template.createUpdater(tweet.getTweetid());
       updater.setLong(COL_TWEET_ID, tweet.getTweetid());
       updater.setLong(COL_USER_ID, tweet.getUserid());
       updater.setString(COL_BODY, tweet.getBody());
       updater.setDate(COL_CREATED_AT, tweet.getCreatedAt());
 
-      try
-      {
-         _template.update(updater);
+      try {
+         template.update(updater);
       }
-      catch (HectorException e)
-      {
+      catch (HectorException e) {
          e.printStackTrace();
       }
    }
 
-   static ColumnFamilyDefinition getColumnFamilyDefinition(String keyspacename)
-   {
-      BasicColumnDefinition idColDef = new BasicColumnDefinition();
+   /**
+    * The column definition for tweets.
+    * 
+    * @param keyspacename Name of the keyspace.
+    * @return The colum definition
+    */
+   static ColumnFamilyDefinition getColumnFamilyDefinition(final String keyspacename) {
+      final BasicColumnDefinition idColDef = new BasicColumnDefinition();
       idColDef.setName(getColumnNameSerializer().toByteBuffer(COL_TWEET_ID));
       idColDef.setIndexName(COL_TWEET_ID + "_idx");
       idColDef.setIndexType(ColumnIndexType.KEYS);
       idColDef.setValidationClass(ComparatorType.LONGTYPE.getClassName());
 
-      BasicColumnDefinition userColDef = new BasicColumnDefinition();
+      final BasicColumnDefinition userColDef = new BasicColumnDefinition();
       userColDef.setName(getColumnNameSerializer().toByteBuffer(COL_USER_ID));
       userColDef.setValidationClass(ComparatorType.LONGTYPE.getClassName());
 
-      BasicColumnDefinition bodyColDef = new BasicColumnDefinition();
+      final BasicColumnDefinition bodyColDef = new BasicColumnDefinition();
       bodyColDef.setName(getColumnNameSerializer().toByteBuffer(COL_BODY));
       bodyColDef.setValidationClass(ComparatorType.UTF8TYPE.getClassName());
 
-      BasicColumnDefinition createdAtColDef = new BasicColumnDefinition();
+      final BasicColumnDefinition createdAtColDef = new BasicColumnDefinition();
       createdAtColDef.setName(getColumnNameSerializer().toByteBuffer(COL_CREATED_AT));
       createdAtColDef.setValidationClass(ComparatorType.DATETYPE.getClassName());
 
-      return HFactory.createColumnFamilyDefinition( // nl
+      return HFactory.createColumnFamilyDefinition(//
             keyspacename, // keinyspace
             COLUMNFAMILY_NAME, // cfName
-            ComparatorType.UTF8TYPE,// comparatorType
+            ComparatorType.UTF8TYPE, // comparatorType
             Arrays.asList((ColumnDefinition) idColDef, (ColumnDefinition) userColDef, (ColumnDefinition) bodyColDef,
                   (ColumnDefinition) createdAtColDef));
 
    }
 
-   public Tweet getTweet(long tweetid)
-   {
-      ColumnFamilyResult<Long, String> res = _template.queryColumns(tweetid);
+   /**
+    * Reads a tweet.
+    * 
+    * @param tweetid Id of the tweet
+    * @return The tweet.
+    */
+   public final Tweet getTweet(final long tweetid) {
+      final ColumnFamilyResult<Long, String> res = template.queryColumns(tweetid);
 
       return getTweet(res);
    }
 
-   private Tweet getTweet(ColumnFamilyResult<Long, String> res)
-   {
-      long tweetId = res.getLong(COL_TWEET_ID);
-      long userId = res.getLong(COL_USER_ID);
-      String body = res.getString(COL_BODY);
-      Date createdAt = res.getDate(COL_CREATED_AT);
+   private static LongSerializer getKeySerializer() {
+      return LongSerializer.get();
+   }
+
+   private static StringSerializer getColumnNameSerializer() {
+      return StringSerializer.get();
+   }
+
+   private Tweet getTweet(final ColumnFamilyResult<Long, String> res) {
+      final long tweetId = res.getLong(COL_TWEET_ID);
+      final long userId = res.getLong(COL_USER_ID);
+      final String body = res.getString(COL_BODY);
+      final Date createdAt = res.getDate(COL_CREATED_AT);
 
       return new Tweet(tweetId, userId, body, createdAt);
    }
 
-   public List<Tweet> getTweets(List<Long> tweetIds)
-   {
-      List<Tweet> tweets = new LinkedList<>();
-      ColumnFamilyResult<Long, String> res = _template.queryColumns(tweetIds);
+   /**
+    * Reads a list of tweets.
+    * 
+    * @param tweetIds All the tweets to read.
+    * @return The list with the tweets for each id.
+    */
+   public final List<Tweet> getTweets(final List<Long> tweetIds) {
+      final List<Tweet> tweets = new LinkedList<>();
+      final ColumnFamilyResult<Long, String> res = template.queryColumns(tweetIds);
 
-      while (res.hasNext())
-      {
+      while (res.hasNext()) {
          tweets.add(getTweet(res));
          res.next();
       }
       return tweets;
    }
 
-   public static void main(String[] args) throws FileNotFoundException, IOException
-   {
-      Config cfg = new Config();
+   /**
+    * Starts to count all the tweets.
+    * 
+    * @param args Command line arguments.
+    * @throws IOException If the configuration could not be read.
+    */
+   public static void main(final String[] args) throws IOException {
+      final Config cfg = new Config();
       System.out.println("Connecting to cluster " + cfg.getClusterName() + " @ " + cfg.getClusterAddress());
-      TweetDao tweetAccess = new JavacampKeyspace(cfg.getClusterName(), cfg.getClusterAddress()).getTweetDao();
+      final TweetDao tweetAccess = new JavacampKeyspace(cfg.getClusterName(), cfg.getClusterAddress()).getTweetDao();
 
       int count = 0;
-      TweetIterator i = tweetAccess.getIterator();
-      while (i.moveNextSkipEmptyRow())
-      {
-         if (count % 10000 == 0)
-         {
+      final TweetIterator i = tweetAccess.getIterator();
+      while (i.moveNextSkipEmptyRow()) {
+         if (count % REPORT_THRESHOLD == 0) {
             System.out.println(count + ": " + i.getKey() + ": userid=" + i.getUserId() + ", body=\"" + i.getBody()
                   + "\", createdAt=" + i.getCreatedAt());
          }
@@ -189,30 +201,33 @@ public class TweetDao
     * 
     * @return The iterator.
     */
-   public TweetIterator getIterator()
-   {
-      return new TweetIterator(_keyspace);
+   public TweetIterator getIterator() {
+      return new TweetIterator(keyspace);
    }
 
-   public static class TweetIterator extends RowIterator<Long, String>
-   {
-      public TweetIterator(Keyspace keyspace)
-      {
+   /**
+    * Iterator for tweets.
+    */
+   public static class TweetIterator extends RowIterator<Long, String> {
+
+      /**
+       * Creates a new iterator.
+       * 
+       * @param keyspace The keyspace.
+       */
+      public TweetIterator(final Keyspace keyspace) {
          super(keyspace, COLUMNFAMILY_NAME, getKeySerializer(), getColumnNameSerializer());
       }
 
-      public long getUserId()
-      {
+      public long getUserId() {
          return LongSerializer.get().fromByteBuffer(getValueByColumnName(COL_USER_ID));
       }
 
-      public Date getCreatedAt()
-      {
+      public Date getCreatedAt() {
          return DateSerializer.get().fromByteBuffer(getValueByColumnName(COL_CREATED_AT));
       }
 
-      public String getBody()
-      {
+      public String getBody() {
          return StringSerializer.get().fromByteBuffer(getValueByColumnName(COL_BODY));
       }
    }

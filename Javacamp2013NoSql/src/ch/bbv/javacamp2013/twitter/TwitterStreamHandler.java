@@ -1,7 +1,5 @@
 package ch.bbv.javacamp2013.twitter;
 
-import java.util.Date;
-
 import twitter4j.FilterQuery;
 import twitter4j.StallWarning;
 import twitter4j.Status;
@@ -61,12 +59,9 @@ public class TwitterStreamHandler implements StatusListener {
    private void addTweetToDB(final Status status) {
       final User user = status.getUser();
       final long userId = user.getId();
-      final long tweetId = status.getId();
-      final Date createdAt = status.getCreatedAt();
-      javacampKeyspace.getUserDao().addUser(
-            new ch.bbv.javacamp2013.model.User(userId, user.getName(), user.getScreenName()));
-      javacampKeyspace.getTweetDao().addTweet(new Tweet(tweetId, userId, status.getText(), createdAt));
-      javacampKeyspace.getUserlineDao().addUserlineEntry(userId, createdAt, tweetId);
+
+      javacampKeyspace.addTweet(new ch.bbv.javacamp2013.model.User(userId, user.getName(), user.getScreenName()),
+            new Tweet(status.getId(), userId, status.getText(), status.getCreatedAt()));
    }
 
    @Override

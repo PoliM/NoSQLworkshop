@@ -16,7 +16,9 @@ public class Config {
 
    private static final String PROP_CLUSTER_ADDRESS = "cluster.address";
 
-   private static final String CLUSTER_NAME = "JavaCampNoSqlCluster";
+   private static final String PROP_CLUSTER_NAME = "cluster.name";
+
+   private String clusterName = "JavaCampNoSqlCluster";
 
    private String clusterAddress = "192.168.20.130:9160";
 
@@ -38,7 +40,7 @@ public class Config {
    }
 
    public String getClusterName() {
-      return CLUSTER_NAME;
+      return clusterName;
    }
 
    /**
@@ -54,6 +56,10 @@ public class Config {
    private void extractClusterFromProperties(final Properties props) {
       if (props.containsKey(PROP_CLUSTER_ADDRESS)) {
          clusterAddress = props.getProperty(PROP_CLUSTER_ADDRESS);
+      }
+
+      if (props.containsKey(PROP_CLUSTER_NAME)) {
+         clusterName = props.getProperty(PROP_CLUSTER_NAME);
       }
    }
 

@@ -1,6 +1,5 @@
 package ch.bbv.javacamp2013.dao;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedList;
@@ -21,7 +20,6 @@ import me.prettyprint.hector.api.ddl.ColumnIndexType;
 import me.prettyprint.hector.api.ddl.ComparatorType;
 import me.prettyprint.hector.api.exceptions.HectorException;
 import me.prettyprint.hector.api.factory.HFactory;
-import ch.bbv.javacamp2013.Config;
 import ch.bbv.javacamp2013.model.Tweet;
 
 /**
@@ -38,7 +36,6 @@ import ch.bbv.javacamp2013.model.Tweet;
  * </ul>
  */
 public class TweetDao {
-   private static final int REPORT_THRESHOLD = 10000;
 
    private static final String COLUMNFAMILY_NAME = "Tweets";
 
@@ -166,34 +163,6 @@ public class TweetDao {
          res.next();
       }
       return tweets;
-   }
-
-   /**
-    * Starts to count all the tweets.
-    * 
-    * @param args Command line arguments.
-    * @throws IOException If the configuration could not be read.
-    */
-   public static void main(final String[] args) throws IOException {
-      final Config cfg = new Config();
-      System.out.println("Connecting to cluster " + cfg.getClusterName() + " @ " + cfg.getClusterAddress());
-      final TweetDao tweetAccess = new JavacampKeyspace(cfg.getClusterName(), cfg.getClusterAddress()).getTweetDao();
-
-      int count = 0;
-      final TweetIterator i = tweetAccess.getIterator();
-      while (i.moveNextSkipEmptyRow()) {
-         if (count % REPORT_THRESHOLD == 0) {
-            System.out.println(count + ": " + i.getKey() + ": userid=" + i.getUserId() + ", body=\"" + i.getBody()
-                  + "\", createdAt=" + i.getCreatedAt());
-         }
-         count++;
-      }
-      System.out.println("Total=" + count);
-
-      // long id = 1234;
-      // tweetAccess.addTweet(id, 23456, "My body", new Date());
-      // tweetAccess.getTweet(id);
-      // tweetAccess.getTweet(id);
    }
 
    /**

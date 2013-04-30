@@ -1,19 +1,16 @@
 package ch.bbv.javacamp2013.dao;
 
-import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.Map;
 import java.util.TreeMap;
 
 import me.prettyprint.cassandra.serializers.DateSerializer;
-import me.prettyprint.cassandra.serializers.LongSerializer;
 import me.prettyprint.cassandra.serializers.StringSerializer;
 import me.prettyprint.cassandra.service.template.ColumnFamilyResult;
 import me.prettyprint.cassandra.service.template.ColumnFamilyTemplate;
 import me.prettyprint.cassandra.service.template.ColumnFamilyUpdater;
 import me.prettyprint.cassandra.service.template.ThriftColumnFamilyTemplate;
 import me.prettyprint.hector.api.Keyspace;
-import me.prettyprint.hector.api.beans.HColumn;
 import me.prettyprint.hector.api.ddl.ColumnFamilyDefinition;
 import me.prettyprint.hector.api.ddl.ComparatorType;
 import me.prettyprint.hector.api.exceptions.HectorException;
@@ -84,8 +81,7 @@ public class WordSearchDao {
          final ColumnFamilyResult<String, Date> res = template.queryColumns(word.toLowerCase());
 
          for (Date date : res.getColumnNames()) {
-            final HColumn<Date, ByteBuffer> column = res.getColumn(date);
-            result.put(date, LongSerializer.get().fromByteBuffer(column.getValue()));
+            result.put(date, res.getLong(date));
          }
       }
       catch (HectorException e) {

@@ -1,6 +1,5 @@
 package ch.bbv.javacamp2013.dao;
 
-import java.io.IOException;
 import java.util.Arrays;
 
 import me.prettyprint.cassandra.model.BasicColumnDefinition;
@@ -17,7 +16,6 @@ import me.prettyprint.hector.api.ddl.ColumnIndexType;
 import me.prettyprint.hector.api.ddl.ComparatorType;
 import me.prettyprint.hector.api.exceptions.HectorException;
 import me.prettyprint.hector.api.factory.HFactory;
-import ch.bbv.javacamp2013.Config;
 import ch.bbv.javacamp2013.model.User;
 
 /**
@@ -31,7 +29,6 @@ import ch.bbv.javacamp2013.model.User;
  * </ul>
  */
 public class UserDao {
-   private static final int REPORT_THRESHOLD = 10000;
 
    private static final String COLUMNFAMILY_NAME = "Users";
 
@@ -139,29 +136,6 @@ public class UserDao {
 
    private static StringSerializer getColumnNameSerializer() {
       return StringSerializer.get();
-   }
-
-   /**
-    * Starts to count users.
-    * 
-    * @param args The command line arguments.
-    * @throws IOException If the configuration could not ber read.
-    */
-   public static void main(final String[] args) throws IOException {
-      final Config cfg = new Config();
-      System.out.println("Connecting to cluster " + cfg.getClusterName() + " @ " + cfg.getClusterAddress());
-      final UserDao userAccess = new JavacampKeyspace(cfg.getClusterName(), cfg.getClusterAddress()).getUserDao();
-
-      int count = 0;
-      final UserIterator iter = userAccess.getIterator();
-      while (iter.moveNextSkipEmptyRow()) {
-         if (count % REPORT_THRESHOLD == 0) {
-            System.out.println(count + ": " + iter.getKey() + ": userid=" + iter.getUserId() + ", name=\""
-                  + iter.getName() + "\", screenName=" + iter.getScreenName());
-         }
-         count++;
-      }
-      System.out.println("Total=" + count);
    }
 
    /**
